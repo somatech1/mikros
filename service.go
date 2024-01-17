@@ -591,18 +591,18 @@ func (s *Service) stopDependentServices(ctx context.Context) error {
 	return nil
 }
 
-// Logger gives access to the utils/logger API from inside a service context.
+// Logger gives access to the logger API from inside a service context.
 func (s *Service) Logger() loggerApi.Logger {
 	return s.logger
 }
 
-// Errors gives access to the utils/errors API from inside a service context.
+// Errors gives access to the errors API from inside a service context.
 func (s *Service) Errors() errorsApi.ErrorFactory {
 	return s.errors
 }
 
-// Abort is a helper method to abort services in the right way, in external
-// initialization, when an error checking is required.
+// Abort is a helper method to abort services in the right way, when external
+// initialization is needed.
 func (s *Service) Abort(message string, err error) {
 	s.abort(context.TODO(), merrors.NewAbortError(message, err))
 }
@@ -701,8 +701,8 @@ func (s *Service) SetupTest(ctx context.Context, t *testing.Testing) *ServiceTes
 	return setupServiceTesting(ctx, s, t)
 }
 
-// CustomDefinitions gives the service access to its custom settings that
-// it may have put inside the 'service.toml' file.
+// CustomDefinitions gives the service access to the service custom settings
+// that it may have put inside the 'service.toml' file.
 //
 // Note that these settings correspond to everything under the [service]
 // object inside the TOML file.

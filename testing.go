@@ -8,8 +8,10 @@ import (
 	"github.com/somatech1/mikros/components/testing"
 )
 
-// ServiceTesting is an object by a Service.SetupTest call. It should be used
-// to create unit tests that needs to use features (internal or external).
+// ServiceTesting is an object created by a Service.SetupTest call.
+//
+// It should be used when creating unit tests that need to use features,
+// internal or external, and require some kind of setup/teardown mechanism.
 type ServiceTesting struct {
 	svc  *Service
 	test *testing.Testing
@@ -36,7 +38,7 @@ func setupServiceTesting(ctx context.Context, svc *Service, t *testing.Testing) 
 	return svcTest
 }
 
-// Teardown releases every resource allocated in the SetupTest call.
+// Teardown releases every resource allocated by the SetupTest call.
 func (s *ServiceTesting) Teardown(ctx context.Context) {
 	iter := s.svc.features.Iterator()
 	for p, next := iter.Next(); next; p, next = iter.Next() {
