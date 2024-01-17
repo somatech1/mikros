@@ -1,0 +1,6 @@
+# Test files
+cover.txt
+cover.html
+
+# vim temporary files
+*.swp
