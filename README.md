@@ -2,7 +2,7 @@
 
 ## About the project
 
-`mikro\_s` is a Go framework for creating applications.
+`mikro_s` is a Go framework for creating applications.
 
 ## Contributing
 
