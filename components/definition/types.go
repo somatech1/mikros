@@ -10,6 +10,7 @@ var (
 	ServiceType_gRPC   = CreateServiceType("grpc")
 	ServiceType_HTTP   = CreateServiceType("http")
 	ServiceType_Native = CreateServiceType("native")
+	ServiceType_Script = CreateServiceType("script")
 )
 
 const (
@@ -71,6 +72,7 @@ func SupportedServiceTypes() []string {
 		ServiceType_gRPC,
 		ServiceType_HTTP,
 		ServiceType_Native,
+		ServiceType_Script,
 	}
 
 	for _, t := range types {

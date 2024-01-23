@@ -18,6 +18,31 @@ func TestDefinitionsValidation(t *testing.T) {
 		CustomAssertion func(defs *Definitions)
 	}{
 		{
+			Title: "should succeed with script type alone",
+			TomlDefinitions: `
+name = "example"
+types = ["script"]
+version = "v1.0.0"
+language = "go"
+product = "SDS"
+`,
+			ErrorAssertion: a.NoError,
+		},
+		{
+			Title: "should not have script service type with other types",
+			TomlDefinitions: `
+name = "example"
+types = ["grpc", "http", "script"]
+version = "v1.0.0"
+language = "go"
+product = "SDS"
+`,
+			ErrorAssertion: a.Error,
+			Expected: []string{
+				"failed on the 'single_script' tag",
+			},
+		},
+		{
 			Title: "should not have duplicated service types",
 			TomlDefinitions: `
 name = "example"
@@ -28,7 +53,7 @@ product = "SDS"
 `,
 			ErrorAssertion: a.Error,
 			Expected: []string{
-				"cannot have duplicated service types",
+				"failed on the 'no_duplicated_service' tag",
 			},
 		},
 		{
@@ -112,40 +137,6 @@ emitted_events = [ "VEHICLE_CREATED" ]
 			},
 			DefsAssertion:  a.NotNil,
 			ErrorAssertion: a.Error,
-		},
-		{
-			Title: "should fail with wrong tracing names",
-			TomlDefinitions: `
-name = "service_test"
-types = ["grpc"]
-version = "v0.1.0"
-language = "go"
-product = "SDS"
-
-[features.database]
-kind = "mongo"
-ttl = 0
-
-[[features.tracing.collectors]]
-name = "error01"
-kind = "counter"
-description = "just a simple error counter"
-
-[[features.tracing.collectors]]
-name = "error02 abc"
-kind = "counter"
-description = "another simple error counter"
-
-[[features.tracing.collectors]]
-name = "error02-abc-EFG"
-kind = "counter"
-description = "another simple error counter"
-`,
-			ErrorAssertion: a.Error,
-			Expected: []string{
-				"Key: 'Definitions.Features.Tracing.Collectors[1].Name' Error:Field validation for 'Name' failed on the 'collector_name' tag",
-				"Key: 'Definitions.Features.Tracing.Collectors[2].Name' Error:Field validation for 'Name' failed on the 'collector_name' tag",
-			},
 		},
 		{
 			Title: "succeed with service custom settings",

@@ -1,18 +1,18 @@
-package native
+package script
 
 import (
 	"context"
 	"errors"
 
 	loggerApi "github.com/somatech1/mikros/apis/logger"
-	"github.com/somatech1/mikros/apis/services/native"
+	"github.com/somatech1/mikros/apis/services/script"
 	"github.com/somatech1/mikros/components/definition"
 	"github.com/somatech1/mikros/components/logger"
 	"github.com/somatech1/mikros/components/plugin"
 )
 
 type Server struct {
-	svc    native.ServiceAPI
+	svc    script.ServiceAPI
 	ctx    context.Context
 	cancel context.CancelFunc
 }
@@ -41,19 +41,19 @@ func (s *Server) Info() []loggerApi.Attribute {
 }
 
 func (s *Server) Run(_ context.Context, srv interface{}) error {
-	svc, ok := srv.(native.ServiceAPI)
+	svc, ok := srv.(script.ServiceAPI)
 	if !ok {
-		return errors.New("server object does not implement the native.ServiceAPI interface")
+		return errors.New("server object does not implement the script.ServiceAPI interface")
 	}
 
 	// Holds a reference to the service, so we can stop it later.
 	s.svc = svc
 
 	// And put it to run.
-	return svc.Start(s.ctx)
+	return svc.Run(s.ctx)
 }
 
 func (s *Server) Stop(ctx context.Context) error {
 	s.cancel()
-	return s.svc.Stop(ctx)
+	return s.svc.Cleanup(ctx)
 }

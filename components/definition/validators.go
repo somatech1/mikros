@@ -3,35 +3,15 @@ package definition
 import (
 	"context"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
-	"unicode"
 
 	"github.com/go-playground/validator/v10"
 )
 
 func validateVersion(_ context.Context, fl validator.FieldLevel) bool {
 	return ValidateVersion(fl.Field().String())
-}
-
-// validateCollectorName checks if a name corresponds to a valid tracing
-// collector name, i.e., low letters or digits in snake case format.
-func validateCollectorName(_ context.Context, fl validator.FieldLevel) bool {
-	if name := fl.Field().String(); name != "" {
-		for _, c := range name {
-			isChar := unicode.IsLetter(c) && unicode.IsLower(c)
-
-			if !isChar && !unicode.IsNumber(c) && c != '_' {
-				return false
-			}
-		}
-
-		return true
-	}
-
-	// We don't accept empty names.
-	return false
-
 }
 
 // ValidateVersion is a helper function to validate the version format used by
@@ -75,4 +55,35 @@ func validateServiceType(ctx context.Context, fl validator.FieldLevel) bool {
 func validatePort(port string) bool {
 	_, err := strconv.ParseInt(port, 10, 32)
 	return err == nil
+}
+
+// ensureScriptTypeIsUnique validates if the 'script' service type is alone in
+// tht list.
+func ensureScriptTypeIsUnique(_ context.Context, fl validator.FieldLevel) bool {
+	if list, ok := fl.Field().Interface().([]string); ok {
+		index := slices.Index(list, ServiceType_Script.String())
+		if index != -1 && len(list) > 1 {
+			return false
+		}
+	}
+
+	return true
+}
+
+// checkDuplicatedServices validates if the list contains duplicated elements.
+func checkDuplicatedServices(_ context.Context, fl validator.FieldLevel) bool {
+	if list, ok := fl.Field().Interface().([]string); ok {
+		types := make(map[string]bool)
+		for _, t := range list {
+			_, ok := types[t]
+			if !ok {
+				types[t] = true
+			}
+			if ok {
+				return false
+			}
+		}
+	}
+
+	return true
 }
