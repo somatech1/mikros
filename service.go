@@ -559,7 +559,7 @@ func (s *Service) run(ctx context.Context, srv interface{}) {
 		return
 	}
 
-	// Otherwise, initialize all service types and them to run.
+	// Otherwise, initialize all service types and put them to run.
 
 	// Create channels for finishing the service and bind the signal that
 	// finishes it.
