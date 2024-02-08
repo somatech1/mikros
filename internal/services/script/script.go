@@ -22,7 +22,7 @@ func New() *Server {
 }
 
 func (s *Server) Name() string {
-	return definition.ServiceType_Native.String()
+	return definition.ServiceType_Script.String()
 }
 
 func (s *Server) Initialize(ctx context.Context, _ *plugin.ServiceOptions) error {

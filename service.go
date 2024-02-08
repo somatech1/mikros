@@ -598,6 +598,8 @@ func (s *Service) stopService(ctx context.Context) {
 				append([]loggerApi.Attribute{logger.Error(err)}, svc.Info()...)...)
 		}
 	}
+
+	s.Logger().Info(ctx, "service stopped")
 }
 
 // stopDependentServices stops other services that are running along with the
