@@ -2,7 +2,6 @@ package definition
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -18,7 +17,7 @@ import (
 // features it will have when executing.
 type Definitions struct {
 	Name     string                 `toml:"name" validate:"required"`
-	Types    []string               `toml:"types" validate:"required,dive,service_type"`
+	Types    []string               `toml:"types" validate:"required,single_script,no_duplicated_service,dive,service_type"`
 	Version  string                 `toml:"version" validate:"required,version"`
 	Language string                 `toml:"language" validate:"required,oneof=go rust"`
 	Product  string                 `toml:"product" validate:"required,oneof=SDS SWORD PIKE"`
@@ -110,11 +109,15 @@ func (d *Definitions) Validate() error {
 		return err
 	}
 
-	if err := validate.RegisterValidationCtx("collector_name", validateCollectorName); err != nil {
+	if err := validate.RegisterValidationCtx("service_type", validateServiceType); err != nil {
 		return err
 	}
 
-	if err := validate.RegisterValidationCtx("service_type", validateServiceType); err != nil {
+	if err := validate.RegisterValidationCtx("single_script", ensureScriptTypeIsUnique); err != nil {
+		return err
+	}
+
+	if err := validate.RegisterValidationCtx("no_duplicated_service", checkDuplicatedServices); err != nil {
 		return err
 	}
 
@@ -123,17 +126,6 @@ func (d *Definitions) Validate() error {
 
 	if err := validate.StructCtx(ctx, d); err != nil {
 		return err
-	}
-
-	types := make(map[string]bool)
-	for _, t := range d.Types {
-		_, ok := types[t]
-		if !ok {
-			types[t] = true
-		}
-		if ok {
-			return errors.New("cannot have duplicated service types")
-		}
 	}
 
 	for _, svc := range d.externalServices {

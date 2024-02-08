@@ -33,6 +33,7 @@ import (
 	"github.com/somatech1/mikros/internal/services/grpc"
 	"github.com/somatech1/mikros/internal/services/http"
 	"github.com/somatech1/mikros/internal/services/native"
+	"github.com/somatech1/mikros/internal/services/script"
 )
 
 // Service is the object which represents a service application.
@@ -171,6 +172,7 @@ func registerInternalServices() *plugin.ServiceSet {
 	services.Register(grpc.New())
 	services.Register(http.New())
 	services.Register(native.New())
+	services.Register(script.New())
 
 	return services
 }
@@ -223,31 +225,7 @@ func (s *Service) Start(srv interface{}) {
 		return
 	}
 
-	defer s.stopService(ctx)
-	defer lifecycle.OnFinish(srv, ctx)
-
-	// Create channels for finishing the service and bind the signal that
-	// finishes it.
-	errChan := make(chan error)
-	stopChan := make(chan os.Signal, 1)
-	signal.Notify(stopChan, syscall.SIGTERM, syscall.SIGINT)
-
-	for _, svc := range s.servers {
-		go func(service plugin.Service) {
-			s.logger.Info(ctx, "service is running", service.Info()...)
-			if err := service.Run(ctx, srv); err != nil {
-				errChan <- err
-			}
-		}(svc)
-	}
-
-	// Blocks the call
-	select {
-	case err := <-errChan:
-		s.abort(ctx, merrors.NewAbortError("fatal error", err))
-
-	case <-stopChan:
-	}
+	s.run(ctx, srv)
 }
 
 func (s *Service) start(srv interface{}) (context.Context, *merrors.AbortError) {
@@ -564,6 +542,49 @@ func (s *Service) printServiceResources(ctx context.Context) {
 	s.logger.Info(ctx, "service resources", fields...)
 }
 
+func (s *Service) run(ctx context.Context, srv interface{}) {
+	defer s.stopService(ctx)
+	defer lifecycle.OnFinish(srv, ctx)
+
+	// In case we're a script service, only execute its function and terminate
+	// the execution.
+	if s.definitions.IsServiceType(definition.ServiceType_Script) {
+		svc := s.servers[0]
+		s.logger.Info(ctx, "service is running", svc.Info()...)
+
+		if err := svc.Run(ctx, srv); err != nil {
+			s.abort(ctx, merrors.NewAbortError("fatal error", err))
+		}
+
+		return
+	}
+
+	// Otherwise, initialize all service types and put them to run.
+
+	// Create channels for finishing the service and bind the signal that
+	// finishes it.
+	errChan := make(chan error)
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, syscall.SIGTERM, syscall.SIGINT)
+
+	for _, svc := range s.servers {
+		go func(service plugin.Service) {
+			s.logger.Info(ctx, "service is running", service.Info()...)
+			if err := service.Run(ctx, srv); err != nil {
+				errChan <- err
+			}
+		}(svc)
+	}
+
+	// Blocks the call
+	select {
+	case err := <-errChan:
+		s.abort(ctx, merrors.NewAbortError("fatal error", err))
+
+	case <-stopChan:
+	}
+}
+
 func (s *Service) stopService(ctx context.Context) {
 	s.logger.Info(ctx, "stopping service")
 
@@ -577,6 +598,8 @@ func (s *Service) stopService(ctx context.Context) {
 				append([]loggerApi.Attribute{logger.Error(err)}, svc.Info()...)...)
 		}
 	}
+
+	s.Logger().Info(ctx, "service stopped")
 }
 
 // stopDependentServices stops other services that are running along with the
