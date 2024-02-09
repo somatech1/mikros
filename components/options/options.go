@@ -8,9 +8,9 @@ import (
 	"github.com/somatech1/mikros/components/definition"
 )
 
-// Options gathers all the main options that one can use to create a new
+// NewServiceOptions gathers all the main options that one can use to create a new
 // service.
-type Options struct {
+type NewServiceOptions struct {
 	// Service must have all required service options according the types
 	// defined in the 'service.toml' file. The same type name should be
 	// used as key here.
@@ -32,14 +32,14 @@ type ServiceOptions interface {
 	Kind() definition.ServiceType
 }
 
-// Validate validates if a Options object contains the required information
+// Validate validates if a NewServiceOptions object contains the required information
 // initialized to proceed.
-func (o *Options) Validate() error {
+func (o *NewServiceOptions) Validate() error {
 	if o == nil {
 		return errors.New("cannot validate a nil object")
 	}
 
-	// Ensures that we're receiving a proper Options object, with
+	// Ensures that we're receiving a proper NewServiceOptions object, with
 	// everything that we need initialized.
 	validate := validator.New()
 	if err := validate.Struct(o); err != nil {

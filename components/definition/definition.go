@@ -20,7 +20,7 @@ type Definitions struct {
 	Types    []string               `toml:"types" validate:"required,single_script,no_duplicated_service,dive,service_type"`
 	Version  string                 `toml:"version" validate:"required,version"`
 	Language string                 `toml:"language" validate:"required,oneof=go rust"`
-	Product  string                 `toml:"product" validate:"required,oneof=SDS SWORD PIKE"`
+	Product  string                 `toml:"product" validate:"required"`
 	Envs     []string               `toml:"envs,omitempty" validate:"dive,ascii,uppercase"`
 	Deploy   Deploy                 `toml:"deploy,omitempty"`
 	Features Features               `toml:"features,omitempty"`

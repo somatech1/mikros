@@ -63,7 +63,7 @@ func ServiceName(name string) service.Name {
 //
 // We don't return an error here to force the application to end in case
 // something wrong happens.
-func NewService(opt *options.Options) *Service {
+func NewService(opt *options.NewServiceOptions) *Service {
 	if err := opt.Validate(); err != nil {
 		log.Fatal(err)
 	}
@@ -78,7 +78,7 @@ func NewService(opt *options.Options) *Service {
 
 // initService parses the service.toml file and creates the Service object
 // initializing its main fields.
-func initService(opt *options.Options) (*Service, error) {
+func initService(opt *options.NewServiceOptions) (*Service, error) {
 	path, err := getServiceTomlPath()
 	if err != nil {
 		return nil, err
