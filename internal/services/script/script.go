@@ -36,7 +36,7 @@ func (s *Server) Initialize(ctx context.Context, _ *plugin.ServiceOptions) error
 
 func (s *Server) Info() []loggerApi.Attribute {
 	return []loggerApi.Attribute{
-		logger.String("service.mode", definition.ServiceType_Native.String()),
+		logger.String("service.mode", definition.ServiceType_Script.String()),
 	}
 }
 
