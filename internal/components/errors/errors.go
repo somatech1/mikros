@@ -38,7 +38,7 @@ func newServiceError(options *serviceErrorOptions) *ServiceError {
 			Message:       options.Message,
 			Destination:   options.Destination,
 			Kind:          options.Kind,
-			SublevelError: options.Error,
+			SublevelError: options.Error.Error(),
 		},
 		logger: options.Logger,
 	}
@@ -58,8 +58,8 @@ func (s *ServiceError) Submit(ctx context.Context) error {
 	// Display the error message onto the output
 	if s.logger != nil {
 		logFields := []loggerApi.Attribute{withKind(s.err.Kind)}
-		if s.err.SublevelError != nil {
-			logFields = append(logFields, logger.Error(s.err.SublevelError))
+		if s.err.SublevelError != "" {
+			logFields = append(logFields, logger.String("error.message", s.err.SublevelError))
 		}
 
 		s.logger(ctx, s.err.Message, append(logFields, s.attributes...)...)
@@ -82,7 +82,7 @@ type Error struct {
 	Message       string    `json:"message,omitempty"`
 	Destination   string    `json:"destination,omitempty"`
 	Kind          ErrorKind `json:"kind"`
-	SublevelError error     `json:"details,omitempty"`
+	SublevelError string    `json:"details,omitempty"`
 
 	hideDetails bool
 }
