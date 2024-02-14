@@ -214,8 +214,9 @@ func (s *Service) WithExternalFeatures(features *plugin.FeatureSet) *Service {
 // We don't return an error here so that the service does not need to handle it
 // inside its code. We abort in case of an error.
 func (s *Service) Start(srv interface{}) {
-	ctx, err := s.start(srv)
-	if err != nil {
+	ctx := context.Background()
+
+	if err := s.start(ctx, srv); err != nil {
 		s.abort(ctx, err)
 	}
 
@@ -228,32 +229,31 @@ func (s *Service) Start(srv interface{}) {
 	s.run(ctx, srv)
 }
 
-func (s *Service) start(srv interface{}) (context.Context, *merrors.AbortError) {
-	ctx := context.Background()
+func (s *Service) start(ctx context.Context, srv interface{}) *merrors.AbortError {
 	s.logger.Info(ctx, "starting service")
 
 	if err := s.validateDefinitions(); err != nil {
-		return nil, merrors.NewAbortError("service definitions error", err)
+		return merrors.NewAbortError("service definitions error", err)
 	}
 
 	if err := s.startFeatures(ctx, srv); err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := s.startTracker(); err != nil {
-		return nil, merrors.NewAbortError("could not initialize the service tracker", err)
+		return merrors.NewAbortError("could not initialize the service tracker", err)
 	}
 
 	if err := s.setupLoggerExtractor(); err != nil {
-		return nil, merrors.NewAbortError("could not set logger extractor", err)
+		return merrors.NewAbortError("could not set logger extractor", err)
 	}
 
 	if err := s.initializeServiceInternals(ctx, srv); err != nil {
-		return nil, err
+		return err
 	}
 
 	s.printServiceResources(ctx)
-	return ctx, nil
+	return nil
 }
 
 // validateDefinitions is responsible for validating the 'service.toml' file
