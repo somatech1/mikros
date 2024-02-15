@@ -39,13 +39,16 @@ func EnsureValuesAreInitialized(v interface{}) error {
 		typeField := elem.Type().Field(i)
 		valueField := elem.Field(i)
 
-		if tag := tags.ParseTag(typeField.Tag); tag != nil {
-			if tag.IsOptional {
+		tag := tags.ParseTag(typeField.Tag)
+		if tag != nil {
+			// Optional members or gRPC clients don't need to be validated.
+			if tag.IsOptional || tag.GrpcClientName != "" {
 				continue
 			}
 		}
 
-		if valueField.IsZero() {
+		isNil := valueField.Kind() == reflect.Ptr && valueField.IsNil()
+		if isNil || valueField.IsZero() {
 			return fmt.Errorf("could not initiate struct %s, value from field %s is missing",
 				elem.Type().Name(), typeField.Name,
 			)
