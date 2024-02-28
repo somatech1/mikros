@@ -112,6 +112,7 @@ When executed, it outputs the following (with a different time according the exe
 * Support for receiving custom 'service.toml' definition rules.
 * Support for HTTP services without being declared in a protobuf file.
 * Support for custom tags, key-value declared in the 'service.toml' file, to be added in each log line.
+* Remove unnecessary Logger APIs.
 
 ## License
 

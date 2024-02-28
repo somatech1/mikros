@@ -30,16 +30,21 @@ type serviceErrorOptions struct {
 }
 
 func newServiceError(options *serviceErrorOptions) *ServiceError {
+	err := &Error{
+		hideDetails: options.HideDetails,
+		Code:        options.Code,
+		ServiceName: options.ServiceName,
+		Message:     options.Message,
+		Destination: options.Destination,
+		Kind:        options.Kind,
+	}
+
+	if options.Error != nil {
+		err.SublevelError = options.Error.Error()
+	}
+
 	return &ServiceError{
-		err: &Error{
-			hideDetails:   options.HideDetails,
-			Code:          options.Code,
-			ServiceName:   options.ServiceName,
-			Message:       options.Message,
-			Destination:   options.Destination,
-			Kind:          options.Kind,
-			SublevelError: options.Error.Error(),
-		},
+		err:    err,
 		logger: options.Logger,
 	}
 }

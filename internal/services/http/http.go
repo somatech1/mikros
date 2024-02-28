@@ -149,7 +149,11 @@ func (s *Server) createAuthHandlers(ctx context.Context, opt *plugin.ServiceOpti
 	)
 
 	// If we're running tests, we won't have authenticated endpoints
-	if !auth || !testMode || authPlugin == nil {
+	if testMode {
+		return nil, nil
+	}
+
+	if !auth || authPlugin == nil {
 		return nil, nil
 	}
 
