@@ -32,7 +32,7 @@ func (c *Client) Initialize(_ context.Context, opt *plugin.InitializeOptions) er
 }
 
 func (c *Client) AddResponseHeader(ctx context.Context, key, value string) {
-	if c.IsEnabled() {
+	if !c.IsEnabled() {
 		return
 	}
 
@@ -44,7 +44,7 @@ func (c *Client) AddResponseHeader(ctx context.Context, key, value string) {
 }
 
 func (c *Client) SetResponseCode(ctx context.Context, code int) {
-	if c.IsEnabled() {
+	if !c.IsEnabled() {
 		return
 	}
 
