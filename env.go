@@ -63,17 +63,13 @@ func loadDefinedEnvVars(deploy definition.ServiceDeploy, defs *definition.Defini
 		envs = make(map[string]string)
 	)
 
-	// We only load environment variables if we're not under tests. We
-	// probably don't need them when running them.
-	if deploy != definition.ServiceDeploy_Test {
-		for _, e := range defs.Envs {
-			v, err := mustGetEnv(e)
-			if err != nil {
-				return nil, err
-			}
-
-			envs[e] = v
+	for _, e := range defs.Envs {
+		v, err := mustGetEnv(e)
+		if err != nil {
+			return nil, err
 		}
+
+		envs[e] = v
 	}
 
 	return envs, nil
