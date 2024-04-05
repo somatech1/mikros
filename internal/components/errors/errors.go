@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	"google.golang.org/grpc/status"
+
 	errorsApi "github.com/somatech1/mikros/apis/errors"
 	loggerApi "github.com/somatech1/mikros/apis/logger"
 	"github.com/somatech1/mikros/components/logger"
@@ -47,6 +49,22 @@ func newServiceError(options *serviceErrorOptions) *ServiceError {
 		err:    err,
 		logger: options.Logger,
 	}
+}
+
+func FromGRPCStatus(st *status.Status) error {
+	var (
+		msg    = st.Message()
+		retErr Error
+	)
+
+	if err := json.Unmarshal([]byte(msg), &retErr); err != nil {
+		return &Error{
+			Message: msg,
+			Kind:    KindInternal,
+		}
+	}
+
+	return &retErr
 }
 
 func (s *ServiceError) WithCode(code int32) errorsApi.Error {

@@ -6,9 +6,12 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 
 	trackerApi "github.com/somatech1/mikros/apis/tracker"
 	mcontext "github.com/somatech1/mikros/components/context"
+	merrors "github.com/somatech1/mikros/internal/components/errors"
+
 	"github.com/somatech1/mikros/components/service"
 )
 
@@ -80,6 +83,14 @@ func gRPCClientUnaryInterceptor(svcCtx *mcontext.ServiceContext, tracker tracker
 		}
 
 		// Calls invoker with a new context.
-		return invoker(mcontext.AppendServiceContext(ctx, svcCtx), method, req, reply, cc, opts...)
+		err := invoker(mcontext.AppendServiceContext(ctx, svcCtx), method, req, reply, cc, opts...)
+
+		// convert grpc error to mikros error
+		if st, ok := status.FromError(err); ok {
+			merr := merrors.FromGRPCStatus(st)
+			return merr
+		}
+
+		return err
 	}
 }
