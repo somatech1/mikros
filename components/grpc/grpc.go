@@ -86,12 +86,11 @@ func gRPCClientUnaryInterceptor(svcCtx *mcontext.ServiceContext, tracker tracker
 		err := invoker(mcontext.AppendServiceContext(ctx, svcCtx), method, req, reply, cc, opts...)
 
 		// convert grpc error to mikros error
-
-		st, ok := status.FromError(err)
-		if !ok {
-			return err
+		if st, ok := status.FromError(err); ok {
+			merr := merrors.FromGRPCStatus(st)
+			return merr
 		}
-		merr := merrors.FromGRPCStatus(st)
-		return merr
+
+		return err
 	}
 }

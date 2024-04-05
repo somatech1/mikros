@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 
+	"google.golang.org/grpc/status"
+
 	errorsApi "github.com/somatech1/mikros/apis/errors"
 	loggerApi "github.com/somatech1/mikros/apis/logger"
 	"github.com/somatech1/mikros/components/logger"
-	"google.golang.org/grpc/status"
 )
 
 // ServiceError is a structure that holds internal error details to improve
@@ -51,12 +52,13 @@ func newServiceError(options *serviceErrorOptions) *ServiceError {
 }
 
 func FromGRPCStatus(st *status.Status) error {
-	msg := st.Message()
+	var (
+		msg    = st.Message()
+		retErr Error
+	)
 
-	var retErr Error
-	err := json.Unmarshal([]byte(msg), &retErr)
-	if err != nil {
-		retErr = Error{
+	if err := json.Unmarshal([]byte(msg), &retErr); err != nil {
+		return &Error{
 			Message: msg,
 			Kind:    KindInternal,
 		}
