@@ -14,6 +14,7 @@ import (
 
 	"github.com/somatech1/mikros/apis/http_auth"
 	"github.com/somatech1/mikros/apis/http_cors"
+	"github.com/somatech1/mikros/apis/http_panic_recovery"
 	loggerApi "github.com/somatech1/mikros/apis/logger"
 	tracingApi "github.com/somatech1/mikros/apis/tracing"
 	trackerApi "github.com/somatech1/mikros/apis/tracker"
@@ -32,6 +33,7 @@ type Server struct {
 	logger            loggerApi.Logger
 	tracing           tracingApi.Tracer
 	tracker           trackerApi.Tracker
+	panicRecovery     http_panic_recovery.Recovery
 }
 
 func New() *Server {
@@ -78,6 +80,8 @@ func (s *Server) Initialize(ctx context.Context, opt *plugin.ServiceOptions) err
 	s.tracing = s.getTracing(opt)
 	s.tracker = s.getTracker(opt)
 	s.trackerHeaderName = opt.Env.TrackerHeaderName()
+
+	s.panicRecovery = s.getPanicRecorvery(opt)
 
 	return nil
 }
@@ -196,6 +200,24 @@ func (s *Server) registerHttpServer(handler fasthttp.RequestHandler, opt *plugin
 	}
 }
 
+func (s *Server) getPanicRecorvery(opt *plugin.ServiceOptions) http_panic_recovery.Recovery {
+	if opt.Definitions.HTTP.DisablePanicRecovery {
+		return nil
+	}
+
+	c, err := opt.Features.Feature(options.PanicRecoveryFeatureName)
+	if err != nil {
+		return nil
+	}
+
+	api, ok := c.(plugin.FeatureInternalAPI)
+	if !ok {
+		return nil
+	}
+
+	return api.FrameworkAPI().(http_panic_recovery.Recovery)
+}
+
 func (s *Server) getCors(opt *plugin.ServiceOptions) http_cors.Handler {
 	c, err := opt.Features.Feature(options.HttpCorsFeatureName)
 	if err != nil {
@@ -234,6 +256,10 @@ func (s *Server) serverRequestHandler(h fasthttp.RequestHandler) fasthttp.Reques
 				s.logger.Error(ctx, "tracing begin failed", logger.Error(err))
 			}
 			data = d
+		}
+
+		if s.panicRecovery != nil {
+			defer s.panicRecovery.Recover(ctx)
 		}
 
 		h(ctx)

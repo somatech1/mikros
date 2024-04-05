@@ -44,8 +44,9 @@ type GrpcClient struct {
 }
 
 type HTTP struct {
-	DisableAuth      bool `toml:"disable_auth,omitempty" default:"false"`
-	HideErrorDetails bool `toml:"hide_error_details,omitempty"`
+	DisableAuth          bool `toml:"disable_auth,omitempty" default:"false"`
+	DisablePanicRecovery bool `toml:"disable_panic_recovery,omitempty" default:"false"`
+	HideErrorDetails     bool `toml:"hide_error_details,omitempty"`
 }
 
 type Deploy struct {

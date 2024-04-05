@@ -16,4 +16,5 @@ const (
 	TracingFeatureName         = FeatureNamePrefix + "tracing"
 	TrackerFeatureName         = FeatureNamePrefix + "tracker"
 	LoggerExtractorFeatureName = FeatureNamePrefix + "logger_extractor"
+	PanicRecoveryFeatureName   = FeatureNamePrefix + "panic_recovery"
 )
