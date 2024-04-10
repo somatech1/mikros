@@ -68,7 +68,10 @@ func getClientConnectionAddress(options *ClientConnectionOptions) string {
 	return addr
 }
 
-func gRPCClientUnaryInterceptor(svcCtx *mcontext.ServiceContext, tracker trackerApi.Tracker) grpc.UnaryClientInterceptor {
+func gRPCClientUnaryInterceptor(
+	svcCtx *mcontext.ServiceContext,
+	tracker trackerApi.Tracker,
+) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		if tracker != nil {
 			trackId := tracker.Generate()
@@ -83,14 +86,15 @@ func gRPCClientUnaryInterceptor(svcCtx *mcontext.ServiceContext, tracker tracker
 		}
 
 		// Calls invoker with a new context.
-		err := invoker(mcontext.AppendServiceContext(ctx, svcCtx), method, req, reply, cc, opts...)
+		if err := invoker(mcontext.AppendServiceContext(ctx, svcCtx), method, req, reply, cc, opts...); err != nil {
+			// convert grpc error to mikros error
+			if st, ok := status.FromError(err); ok {
+				return merrors.FromGRPCStatus(st)
+			}
 
-		// convert grpc error to mikros error
-		if st, ok := status.FromError(err); ok {
-			merr := merrors.FromGRPCStatus(st)
-			return merr
+			return err
 		}
 
-		return err
+		return nil
 	}
 }
