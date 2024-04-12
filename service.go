@@ -475,7 +475,7 @@ func (s *Service) coupleClients(srv interface{}) error {
 	for i := 0; i < typeOf.Elem().NumField(); i++ {
 		typeField := typeOf.Elem().Field(i)
 		if tag := tags.ParseTag(typeField.Tag); tag != nil {
-			if tag.IsOptional {
+			if tag.IsOptional || tag.GrpcClientName == "" {
 				continue
 			}
 
