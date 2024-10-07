@@ -494,7 +494,8 @@ func (s *Service) coupleClients(srv interface{}) error {
 			// members to these connections.
 
 			cOpts := &mgrpc.ClientConnectionOptions{
-				ServiceName: client.ServiceName,
+				ServiceName: s.definitions.ServiceName(),
+				ClientName:  client.ServiceName,
 				Context:     s.ctx,
 				Connection: mgrpc.ConnectionOptions{
 					Namespace: s.envs.CoupledNamespace,

@@ -1,21 +1,10 @@
 package errors
 
 import (
-	"errors"
 	"fmt"
 
 	errorsApi "github.com/somatech1/mikros/apis/errors"
 	loggerApi "github.com/somatech1/mikros/apis/logger"
-)
-
-// Internal error codes.
-const (
-	CodeInternal int32 = iota + 1
-	CodeNotFound
-	CodeInvalidArgument
-	CodePreconditionFailed
-	CodeNoPermission
-	CodeRPC
 )
 
 // ErrorKind is an error representation of a mapped error.
@@ -53,12 +42,10 @@ func NewFactory(options FactoryOptions) *Factory {
 }
 
 // RPC sets that the current error is related to an RPC call with another gRPC
-// service (destination), However, it checks if the error is already a known
-// error, so it does not override it.
+// service (destination).
 func (f *Factory) RPC(err error, destination string) errorsApi.Error {
 	return newServiceError(&serviceErrorOptions{
 		HideDetails: f.hideMessageDetails,
-		Code:        CodeRPC,
 		Kind:        KindRPC,
 		ServiceName: f.serviceName,
 		Message:     "service RPC error",
@@ -73,7 +60,6 @@ func (f *Factory) RPC(err error, destination string) errorsApi.Error {
 func (f *Factory) InvalidArgument(err error) errorsApi.Error {
 	return newServiceError(&serviceErrorOptions{
 		HideDetails: f.hideMessageDetails,
-		Code:        CodeInvalidArgument,
 		Kind:        KindValidation,
 		ServiceName: f.serviceName,
 		Message:     "request validation failed",
@@ -87,12 +73,10 @@ func (f *Factory) InvalidArgument(err error) errorsApi.Error {
 func (f *Factory) FailedPrecondition(message string) errorsApi.Error {
 	return newServiceError(&serviceErrorOptions{
 		HideDetails: f.hideMessageDetails,
-		Code:        CodePreconditionFailed,
 		Kind:        KindPrecondition,
 		ServiceName: f.serviceName,
-		Message:     "failed precondition",
+		Message:     message,
 		Logger:      f.logger.Warn,
-		Error:       errors.New(message),
 	})
 }
 
@@ -101,7 +85,6 @@ func (f *Factory) FailedPrecondition(message string) errorsApi.Error {
 func (f *Factory) NotFound() errorsApi.Error {
 	return newServiceError(&serviceErrorOptions{
 		HideDetails: f.hideMessageDetails,
-		Code:        CodeNotFound,
 		Kind:        KindNotFound,
 		ServiceName: f.serviceName,
 		Message:     "not found",
@@ -114,7 +97,6 @@ func (f *Factory) NotFound() errorsApi.Error {
 func (f *Factory) Internal(err error) errorsApi.Error {
 	return newServiceError(&serviceErrorOptions{
 		HideDetails: f.hideMessageDetails,
-		Code:        CodeInternal,
 		Kind:        KindInternal,
 		ServiceName: f.serviceName,
 		Message:     "got an internal error",
@@ -128,7 +110,6 @@ func (f *Factory) Internal(err error) errorsApi.Error {
 func (f *Factory) PermissionDenied() errorsApi.Error {
 	return newServiceError(&serviceErrorOptions{
 		HideDetails: f.hideMessageDetails,
-		Code:        CodeNoPermission,
 		Kind:        KindPermission,
 		ServiceName: f.serviceName,
 		Message:     fmt.Sprintf("no permission to access %s", f.serviceName),

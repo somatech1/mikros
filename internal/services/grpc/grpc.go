@@ -47,10 +47,6 @@ func (s *Server) Info() []loggerApi.Attribute {
 	}
 }
 
-func (s *Server) recoverFromGrpcPanic(ctx context.Context, p interface{}) error {
-	return s.errors.Internal(fmt.Errorf("%v", p)).Submit(ctx)
-}
-
 func (s *Server) Run(_ context.Context, srv interface{}) error {
 	s.server.RegisterService(s.protoServiceDesc, srv)
 	reflection.Register(s.server)
@@ -85,9 +81,11 @@ func (s *Server) Initialize(_ context.Context, opt *plugin.ServiceOptions) error
 	// Starts the gRPC server
 	s.server = grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			grpc_middleware.ChainUnaryServer(grpc_recovery.UnaryServerInterceptor(
-				grpc_recovery.WithRecoveryHandlerContext(s.recoverFromGrpcPanic),
-			)),
+			grpc_middleware.ChainUnaryServer(
+				grpc_recovery.UnaryServerInterceptor(
+					grpc_recovery.WithRecoveryHandlerContext(s.recoverFromGrpcPanic),
+				),
+			),
 		),
 	)
 
@@ -97,6 +95,10 @@ func (s *Server) Initialize(_ context.Context, opt *plugin.ServiceOptions) error
 	s.health = healthSrv
 
 	return nil
+}
+
+func (s *Server) recoverFromGrpcPanic(ctx context.Context, p interface{}) error {
+	return s.errors.Internal(fmt.Errorf("%v", p)).Submit(ctx)
 }
 
 func (s *Server) validate(opt *plugin.ServiceOptions) error {
