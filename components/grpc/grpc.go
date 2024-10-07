@@ -10,15 +10,15 @@ import (
 
 	trackerApi "github.com/somatech1/mikros/apis/tracker"
 	mcontext "github.com/somatech1/mikros/components/context"
-	merrors "github.com/somatech1/mikros/internal/components/errors"
-
 	"github.com/somatech1/mikros/components/service"
+	merrors "github.com/somatech1/mikros/internal/components/errors"
 )
 
 // ClientConnectionOptions gathers custom options to establish a connection with
 // a gRPC client.
 type ClientConnectionOptions struct {
 	ServiceName           service.Name
+	ClientName            service.Name
 	Context               *mcontext.ServiceContext
 	Connection            ConnectionOptions
 	AlternativeConnection *ConnectionOptions
@@ -42,7 +42,7 @@ func ClientConnection(options *ClientConnectionOptions) (*grpc.ClientConn, error
 	conn, err := grpc.Dial(
 		address,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(gRPCClientUnaryInterceptor(options.Context, options.Tracker)),
+		grpc.WithUnaryInterceptor(gRPCClientUnaryInterceptor(options.Context, options.Tracker, options.ServiceName, options.ClientName)),
 	)
 	if err != nil {
 		return nil, err
@@ -60,18 +60,15 @@ func getClientConnectionAddress(options *ClientConnectionOptions) string {
 		return fmt.Sprintf("%s.%v:%d", prefix, c.Namespace, c.Port)
 	}
 
-	addr := getAddress(options.ServiceName.String(), &options.Connection)
+	addr := getAddress(options.ClientName.String(), &options.Connection)
 	if options.AlternativeConnection != nil {
-		addr = getAddress(options.ServiceName.String(), options.AlternativeConnection)
+		addr = getAddress(options.ClientName.String(), options.AlternativeConnection)
 	}
 
 	return addr
 }
 
-func gRPCClientUnaryInterceptor(
-	svcCtx *mcontext.ServiceContext,
-	tracker trackerApi.Tracker,
-) grpc.UnaryClientInterceptor {
+func gRPCClientUnaryInterceptor(svcCtx *mcontext.ServiceContext, tracker trackerApi.Tracker, from, to service.Name) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		if tracker != nil {
 			trackId := tracker.Generate()
@@ -87,11 +84,12 @@ func gRPCClientUnaryInterceptor(
 
 		// Calls invoker with a new context.
 		if err := invoker(mcontext.AppendServiceContext(ctx, svcCtx), method, req, reply, cc, opts...); err != nil {
-			// convert grpc error to mikros error
+			// Return the proper inner service error for the caller.
 			if st, ok := status.FromError(err); ok {
-				return merrors.FromGRPCStatus(st)
+				return merrors.FromGRPCStatus(st, from, to)
 			}
 
+			// Should not fall here
 			return err
 		}
 

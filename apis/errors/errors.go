@@ -41,7 +41,7 @@ type ErrorFactory interface {
 // the error using the language error type.
 type Error interface {
 	// WithCode sets a custom error code to be added inside the error.
-	WithCode(code int32) Error
+	WithCode(code Code) Error
 
 	// WithAttributes adds a set o custom log attributes to be inserted into
 	// the log message.
@@ -50,4 +50,8 @@ type Error interface {
 	// Submit wraps the service error into a proper error type allowing the
 	// service to return it.
 	Submit(ctx context.Context) error
+}
+
+type Code interface {
+	ErrorCode() int32
 }

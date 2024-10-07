@@ -3,12 +3,14 @@ package errors
 import (
 	"context"
 	"encoding/json"
-
+	"errors"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	errorsApi "github.com/somatech1/mikros/apis/errors"
 	loggerApi "github.com/somatech1/mikros/apis/logger"
 	"github.com/somatech1/mikros/components/logger"
+	"github.com/somatech1/mikros/components/service"
 )
 
 // ServiceError is a structure that holds internal error details to improve
@@ -42,7 +44,7 @@ func newServiceError(options *serviceErrorOptions) *ServiceError {
 	}
 
 	if options.Error != nil {
-		err.SublevelError = options.Error.Error()
+		err.SubLevelError = options.Error.Error()
 	}
 
 	return &ServiceError{
@@ -51,24 +53,34 @@ func newServiceError(options *serviceErrorOptions) *ServiceError {
 	}
 }
 
-func FromGRPCStatus(st *status.Status) error {
+func FromGRPCStatus(st *status.Status, from, to service.Name) error {
 	var (
 		msg    = st.Message()
 		retErr Error
 	)
 
 	if err := json.Unmarshal([]byte(msg), &retErr); err != nil {
-		return &Error{
-			Message: msg,
-			Kind:    KindInternal,
-		}
+		return newServiceError(&serviceErrorOptions{
+			Destination: to.String(),
+			Kind:        KindInternal,
+			ServiceName: from.String(),
+			Message:     "got an internal error",
+			Error:       errors.New(msg),
+		}).Submit(nil)
+	}
+
+	// If we're dealing with a non mikros error, change it to an Internal
+	// one so services can properly handle them.
+	if st.Code() != codes.Unknown {
+		retErr.Kind = KindInternal
+		retErr.SubLevelError = msg
 	}
 
 	return &retErr
 }
 
-func (s *ServiceError) WithCode(code int32) errorsApi.Error {
-	s.err.Code = code
+func (s *ServiceError) WithCode(code errorsApi.Code) errorsApi.Error {
+	s.err.Code = code.ErrorCode()
 	return s
 }
 
@@ -81,8 +93,8 @@ func (s *ServiceError) Submit(ctx context.Context) error {
 	// Display the error message onto the output
 	if s.logger != nil {
 		logFields := []loggerApi.Attribute{withKind(s.err.Kind)}
-		if s.err.SublevelError != "" {
-			logFields = append(logFields, logger.String("error.message", s.err.SublevelError))
+		if s.err.SubLevelError != "" {
+			logFields = append(logFields, logger.String("error.message", s.err.SubLevelError))
 		}
 
 		s.logger(ctx, s.err.Message, append(logFields, s.attributes...)...)
@@ -105,7 +117,7 @@ type Error struct {
 	Message       string    `json:"message,omitempty"`
 	Destination   string    `json:"destination,omitempty"`
 	Kind          ErrorKind `json:"kind"`
-	SublevelError string    `json:"details,omitempty"`
+	SubLevelError string    `json:"details,omitempty"`
 
 	hideDetails bool
 }
@@ -125,9 +137,8 @@ func (e *Error) String() string {
 	// The framework can be initialized disabling error message details at the
 	// output to avoid showing internal information.
 	if !e.hideDetails {
-		out.SublevelError = e.SublevelError
+		out.SubLevelError = e.SubLevelError
 		out.ServiceName = e.ServiceName
-		out.Destination = e.Destination
 	}
 
 	b, _ := json.Marshal(out)

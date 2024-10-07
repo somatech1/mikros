@@ -8,7 +8,7 @@ import (
 
 // IsInternalError checks if an error is a framework Internal error.
 func IsInternalError(err error) bool {
-	if e, ok := isKnownError(err); ok {
+	if e, ok := IsKnownError(err); ok {
 		return e.Kind == merrors.KindInternal
 	}
 
@@ -17,7 +17,7 @@ func IsInternalError(err error) bool {
 
 // IsNotFoundError checks if an error is a framework NotFound error.
 func IsNotFoundError(err error) bool {
-	if e, ok := isKnownError(err); ok {
+	if e, ok := IsKnownError(err); ok {
 		return e.Kind == merrors.KindNotFound
 	}
 
@@ -26,7 +26,7 @@ func IsNotFoundError(err error) bool {
 
 // IsInvalidArgumentError checks if an error is a framework InvalidArgument error.
 func IsInvalidArgumentError(err error) bool {
-	if e, ok := isKnownError(err); ok {
+	if e, ok := IsKnownError(err); ok {
 		return e.Kind == merrors.KindValidation
 	}
 
@@ -35,7 +35,7 @@ func IsInvalidArgumentError(err error) bool {
 
 // IsPreconditionError checks if an error is a framework FailedPrecondition error.
 func IsPreconditionError(err error) bool {
-	if e, ok := isKnownError(err); ok {
+	if e, ok := IsKnownError(err); ok {
 		return e.Kind == merrors.KindPrecondition
 	}
 
@@ -44,7 +44,7 @@ func IsPreconditionError(err error) bool {
 
 // IsPermissionDeniedError checks if an error is a framework PermissionDenied error.
 func IsPermissionDeniedError(err error) bool {
-	if e, ok := isKnownError(err); ok {
+	if e, ok := IsKnownError(err); ok {
 		return e.Kind == merrors.KindPermission
 	}
 
@@ -53,7 +53,7 @@ func IsPermissionDeniedError(err error) bool {
 
 // IsCustomError checks if an error is a framework Custom error.
 func IsCustomError(err error) bool {
-	if e, ok := isKnownError(err); ok {
+	if e, ok := IsKnownError(err); ok {
 		return e.Kind == merrors.KindCustom
 	}
 
@@ -62,14 +62,14 @@ func IsCustomError(err error) bool {
 
 // IsRPCError checks if an error is a framework RPC error.
 func IsRPCError(err error) bool {
-	if e, ok := isKnownError(err); ok {
+	if e, ok := IsKnownError(err); ok {
 		return e.Kind == merrors.KindRPC
 	}
 
 	return false
 }
 
-func isKnownError(err error) (*merrors.Error, bool) {
+func IsKnownError(err error) (*merrors.Error, bool) {
 	var e *merrors.Error
 	ok := errors.As(err, &e)
 	return e, ok
