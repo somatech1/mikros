@@ -128,15 +128,15 @@ func (e *Error) Error() string {
 
 func (e *Error) String() string {
 	out := Error{
-		Code:        e.Code,
-		Destination: e.Destination,
-		Kind:        e.Kind,
-		Message:     e.Message,
+		Code:    e.Code,
+		Kind:    e.Kind,
+		Message: e.Message,
 	}
 
 	// The framework can be initialized disabling error message details at the
 	// output to avoid showing internal information.
 	if !e.hideDetails {
+		out.Destination = e.Destination
 		out.SubLevelError = e.SubLevelError
 		out.ServiceName = e.ServiceName
 	}

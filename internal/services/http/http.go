@@ -56,7 +56,6 @@ func (s *Server) Run(_ context.Context, _ interface{}) error {
 }
 
 func (s *Server) Stop(_ context.Context) error {
-	time.Sleep(time.Second * 3)
 	return s.server.Shutdown()
 }
 
