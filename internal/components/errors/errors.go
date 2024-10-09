@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -25,7 +26,7 @@ type ServiceError struct {
 type serviceErrorOptions struct {
 	HideDetails bool
 	Code        int32
-	Kind        ErrorKind
+	Kind        errorsApi.Kind
 	ServiceName string
 	Message     string
 	Destination string
@@ -62,17 +63,17 @@ func FromGRPCStatus(st *status.Status, from, to service.Name) error {
 	if err := json.Unmarshal([]byte(msg), &retErr); err != nil {
 		return newServiceError(&serviceErrorOptions{
 			Destination: to.String(),
-			Kind:        KindInternal,
+			Kind:        errorsApi.KindInternal,
 			ServiceName: from.String(),
 			Message:     "got an internal error",
 			Error:       errors.New(msg),
-		}).Submit(nil)
+		}).Submit(context.TODO())
 	}
 
 	// If we're dealing with a non mikros error, change it to an Internal
 	// one so services can properly handle them.
 	if st.Code() != codes.Unknown {
-		retErr.Kind = KindInternal
+		retErr.Kind = errorsApi.KindInternal
 		retErr.SubLevelError = msg
 	}
 
@@ -104,20 +105,24 @@ func (s *ServiceError) Submit(ctx context.Context) error {
 	return s.err
 }
 
-// withKind wraps an ErrorKind into a structured log Attribute.
-func withKind(kind ErrorKind) loggerApi.Attribute {
+func (s *ServiceError) Kind() errorsApi.Kind {
+	return s.err.Kind
+}
+
+// withKind wraps a Kind into a structured log Attribute.
+func withKind(kind errorsApi.Kind) loggerApi.Attribute {
 	return logger.String("error.kind", string(kind))
 }
 
 // Error is the framework error type that a service handler should return to
 // keep a standard error between services.
 type Error struct {
-	Code          int32     `json:"code"`
-	ServiceName   string    `json:"service_name,omitempty"`
-	Message       string    `json:"message,omitempty"`
-	Destination   string    `json:"destination,omitempty"`
-	Kind          ErrorKind `json:"kind"`
-	SubLevelError string    `json:"details,omitempty"`
+	Code          int32          `json:"code"`
+	ServiceName   string         `json:"service_name,omitempty"`
+	Message       string         `json:"message,omitempty"`
+	Destination   string         `json:"destination,omitempty"`
+	Kind          errorsApi.Kind `json:"kind"`
+	SubLevelError string         `json:"details,omitempty"`
 
 	hideDetails bool
 }
