@@ -312,7 +312,7 @@ func (s *Service) initializeFeatures(ctx context.Context, srv interface{}) error
 		Env:             s.envs.ToMapEnv(),
 	}
 
-	// Initialize features
+	// Initialize registered features
 	if err := s.features.InitializeAll(ctx, initializeOptions); err != nil {
 		return err
 	}
@@ -320,6 +320,37 @@ func (s *Service) initializeFeatures(ctx context.Context, srv interface{}) error
 	// And execute their Start API
 	if err := s.features.StartAll(ctx, srv); err != nil {
 		return err
+	}
+
+	// Load tagged features into the service struct
+	if err := s.loadTaggedFeatures(ctx, srv); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) loadTaggedFeatures(ctx context.Context, srv interface{}) error {
+	var (
+		typeOf  = reflect.TypeOf(srv)
+		valueOf = reflect.ValueOf(srv)
+	)
+
+	for i := 0; i < typeOf.Elem().NumField(); i++ {
+		typeField := typeOf.Elem().Field(i)
+		if tag := tags.ParseTag(typeField.Tag); tag != nil {
+			if !tag.IsFeature {
+				continue
+			}
+
+			if valueOf.Elem().Field(i).CanSet() {
+				f := reflect.New(typeField.Type).Elem()
+				if err := s.Feature(ctx, f.Addr().Interface()); err != nil {
+					return err
+				}
+				valueOf.Elem().Field(i).Set(f)
+			}
+		}
 	}
 
 	return nil
@@ -475,7 +506,8 @@ func (s *Service) coupleClients(srv interface{}) error {
 	for i := 0; i < typeOf.Elem().NumField(); i++ {
 		typeField := typeOf.Elem().Field(i)
 		if tag := tags.ParseTag(typeField.Tag); tag != nil {
-			if tag.IsOptional || tag.GrpcClientName == "" {
+			isClient := !tag.IsOptional && !tag.IsFeature && tag.GrpcClientName != ""
+			if !isClient {
 				continue
 			}
 
