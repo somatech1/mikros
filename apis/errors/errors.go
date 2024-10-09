@@ -6,6 +6,23 @@ import (
 	"github.com/somatech1/mikros/apis/logger"
 )
 
+// Kind is an error representation of a mapped error.
+type Kind string
+
+var (
+	KindValidation   Kind = "ValidationError"
+	KindInternal     Kind = "InternalError"
+	KindNotFound     Kind = "NotFoundError"
+	KindPrecondition Kind = "ConditionError"
+	KindPermission   Kind = "PermissionError"
+	KindRPC          Kind = "RPCError"
+	KindCustom       Kind = "CustomError"
+)
+
+func (k Kind) String() string {
+	return string(k)
+}
+
 // ErrorFactory is an API that a service must use to wrap its errors into a proper
 // framework error.
 type ErrorFactory interface {
@@ -50,8 +67,13 @@ type Error interface {
 	// Submit wraps the service error into a proper error type allowing the
 	// service to return it.
 	Submit(ctx context.Context) error
+
+	// Kind returns the kind of error represented by the error.
+	Kind() Kind
 }
 
+// Code is an interface that allows a service embed an integer value into an
+// error.
 type Code interface {
 	ErrorCode() int32
 }
