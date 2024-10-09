@@ -10,6 +10,7 @@ const (
 )
 
 type Tag struct {
+	IsFeature      bool
 	IsOptional     bool
 	GrpcClientName string
 }
@@ -28,6 +29,8 @@ func ParseTag(tag reflect.StructTag) *Tag {
 			parsedTag.IsOptional = true
 		case "grpc_client":
 			parsedTag.GrpcClientName = parts[1]
+		case "feature":
+			parsedTag.IsFeature = true
 		}
 	}
 
