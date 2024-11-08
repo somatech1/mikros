@@ -389,18 +389,20 @@ func (s *Service) initializeServiceInternals(ctx context.Context, srv interface{
 		return merrors.NewAbortError("could not initialize internal services", err)
 	}
 
+	// Establishes connection with all gRPC clients.
+	if err := s.coupleClients(srv); err != nil {
+		return merrors.NewAbortError("could not establish connection with clients", err)
+	}
+
 	// Call lifecycle.OnStart before validating the service structure to
-	// allow its fields to be initialized at this point.
+	// allow its fields to be initialized at this point. Also, ensures that
+	// everything declared inside the main struct service is initialized to
+	// be used inside the callback.
 	if err := lifecycle.OnStart(srv, ctx); err != nil {
 		return merrors.NewAbortError("failed while running lifecycle.OnStart", err)
 	}
 
 	if s.envs.DeploymentEnv != definition.ServiceDeploy_Test {
-		// Establishes connection with all gRPC clients.
-		if err := s.coupleClients(srv); err != nil {
-			return merrors.NewAbortError("could not establish connection with clients", err)
-		}
-
 		if err := validations.EnsureValuesAreInitialized(srv); err != nil {
 			return merrors.NewAbortError("service server object is not properly initialized", err)
 		}
@@ -493,8 +495,9 @@ func (s *Service) initializeRegisteredServices(ctx context.Context, srv interfac
 // coupleClients establishes connections with all client services that a service
 // has as dependency.
 func (s *Service) coupleClients(srv interface{}) error {
-	// Assures that the service has dependencies.
-	if len(s.clients) == 0 {
+	// If the service does not have dependencies, or we are running tests,
+	// don't need to continue.
+	if len(s.clients) == 0 || s.envs.DeploymentEnv == definition.ServiceDeploy_Test {
 		return nil
 	}
 
