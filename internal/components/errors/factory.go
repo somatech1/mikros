@@ -8,23 +8,20 @@ import (
 )
 
 type Factory struct {
-	hideMessageDetails bool
-	serviceName        string
-	logger             loggerApi.Logger
+	serviceName string
+	logger      loggerApi.Logger
 }
 
 type FactoryOptions struct {
-	HideMessageDetails bool
-	ServiceName        string
-	Logger             loggerApi.Logger
+	ServiceName string
+	Logger      loggerApi.Logger
 }
 
 // NewFactory creates a new Factory object.
 func NewFactory(options FactoryOptions) *Factory {
 	return &Factory{
-		serviceName:        options.ServiceName,
-		logger:             options.Logger,
-		hideMessageDetails: options.HideMessageDetails,
+		serviceName: options.ServiceName,
+		logger:      options.Logger,
 	}
 }
 
@@ -32,7 +29,6 @@ func NewFactory(options FactoryOptions) *Factory {
 // service (destination).
 func (f *Factory) RPC(err error, destination string) errorsApi.Error {
 	return newServiceError(&serviceErrorOptions{
-		HideDetails: f.hideMessageDetails,
 		Kind:        errorsApi.KindRPC,
 		ServiceName: f.serviceName,
 		Message:     "service RPC error",
@@ -46,7 +42,6 @@ func (f *Factory) RPC(err error, destination string) errorsApi.Error {
 // didn't follow validation rules.
 func (f *Factory) InvalidArgument(err error) errorsApi.Error {
 	return newServiceError(&serviceErrorOptions{
-		HideDetails: f.hideMessageDetails,
 		Kind:        errorsApi.KindValidation,
 		ServiceName: f.serviceName,
 		Message:     "request validation failed",
@@ -59,7 +54,6 @@ func (f *Factory) InvalidArgument(err error) errorsApi.Error {
 // condition which wasn't satisfied.
 func (f *Factory) FailedPrecondition(message string) errorsApi.Error {
 	return newServiceError(&serviceErrorOptions{
-		HideDetails: f.hideMessageDetails,
 		Kind:        errorsApi.KindPrecondition,
 		ServiceName: f.serviceName,
 		Message:     message,
@@ -71,7 +65,6 @@ func (f *Factory) FailedPrecondition(message string) errorsApi.Error {
 // probably in the database.
 func (f *Factory) NotFound() errorsApi.Error {
 	return newServiceError(&serviceErrorOptions{
-		HideDetails: f.hideMessageDetails,
 		Kind:        errorsApi.KindNotFound,
 		ServiceName: f.serviceName,
 		Message:     "not found",
@@ -83,7 +76,6 @@ func (f *Factory) NotFound() errorsApi.Error {
 // error.
 func (f *Factory) Internal(err error) errorsApi.Error {
 	return newServiceError(&serviceErrorOptions{
-		HideDetails: f.hideMessageDetails,
 		Kind:        errorsApi.KindInternal,
 		ServiceName: f.serviceName,
 		Message:     "got an internal error",
@@ -96,7 +88,6 @@ func (f *Factory) Internal(err error) errorsApi.Error {
 // to access a resource without having permission to do so.
 func (f *Factory) PermissionDenied() errorsApi.Error {
 	return newServiceError(&serviceErrorOptions{
-		HideDetails: f.hideMessageDetails,
 		Kind:        errorsApi.KindPermission,
 		ServiceName: f.serviceName,
 		Message:     fmt.Sprintf("no permission to access %s", f.serviceName),
@@ -108,7 +99,6 @@ func (f *Factory) PermissionDenied() errorsApi.Error {
 // will be treated as an Internal error.
 func (f *Factory) Custom(msg string) errorsApi.Error {
 	return newServiceError(&serviceErrorOptions{
-		HideDetails: f.hideMessageDetails,
 		Kind:        errorsApi.KindCustom,
 		ServiceName: f.serviceName,
 		Message:     msg,

@@ -178,15 +178,9 @@ func registerInternalServices() *plugin.ServiceSet {
 }
 
 func initServiceErrors(defs *definition.Definitions, log loggerApi.Logger) *merrors.Factory {
-	var hideDetails bool
-	if defs.IsServiceType(definition.ServiceType_HTTP) {
-		hideDetails = defs.HTTP.HideErrorDetails
-	}
-
 	return merrors.NewFactory(merrors.FactoryOptions{
-		HideMessageDetails: hideDetails,
-		ServiceName:        defs.ServiceName().String(),
-		Logger:             log,
+		ServiceName: defs.ServiceName().String(),
+		Logger:      log,
 	})
 }
 
@@ -686,7 +680,7 @@ func (s *Service) DeployEnvironment() definition.ServiceDeploy {
 func (s *Service) tags() map[string]string {
 	serviceType := s.definitions.ServiceTypesAsString()
 	if strings.Contains(serviceType, ",") {
-		// SQS tags does not accept commas, just unicode letters, digits,
+		// SQS tags does not accept commas, just Unicode letters, digits,
 		// whitespace, or one of these symbols: _ . : / = + - @
 		serviceType = "hybrid"
 	}

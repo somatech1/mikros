@@ -47,7 +47,7 @@ func newEnv(defs *definition.Definitions) (*Env, error) {
 	envs.autoAdjust()
 
 	// Load service defined environment variables (through service.toml 'envs' key)
-	definedEnvs, err := loadDefinedEnvVars(envs.DeploymentEnv, defs)
+	definedEnvs, err := loadDefinedEnvVars(defs)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func newEnv(defs *definition.Definitions) (*Env, error) {
 
 // loadDefinedEnvVars loads envs defined in the 'service.toml' file as mandatory
 // values, í.e., they must be available when the service starts.
-func loadDefinedEnvVars(deploy definition.ServiceDeploy, defs *definition.Definitions) (map[string]string, error) {
+func loadDefinedEnvVars(defs *definition.Definitions) (map[string]string, error) {
 	var (
 		envs = make(map[string]string)
 	)

@@ -28,6 +28,7 @@ import (
 type Server struct {
 	port              service.ServerPort
 	trackerHeaderName string
+	defs              *Definitions
 	server            *fasthttp.Server
 	listener          net.Listener
 	logger            loggerApi.Logger
@@ -48,6 +49,7 @@ func (s *Server) Info() []loggerApi.Attribute {
 	return []loggerApi.Attribute{
 		logger.String("service.address", fmt.Sprintf(":%v", s.port.Int32())),
 		logger.String("service.mode", definition.ServiceType_HTTP.String()),
+		logger.String("service.http_auth", fmt.Sprintf("%t", !s.defs.DisableAuth)),
 	}
 }
 
@@ -73,6 +75,7 @@ func (s *Server) Initialize(ctx context.Context, opt *plugin.ServiceOptions) err
 		return err
 	}
 
+	s.defs = newDefinitions(opt.Definitions)
 	s.listener = listener
 	s.port = opt.Port
 	s.logger = opt.Logger
@@ -80,7 +83,7 @@ func (s *Server) Initialize(ctx context.Context, opt *plugin.ServiceOptions) err
 	s.tracker = s.getTracker(opt)
 	s.trackerHeaderName = opt.Env.TrackerHeaderName()
 
-	s.panicRecovery = s.getPanicRecorvery(opt)
+	s.panicRecovery = s.getPanicRecovery(opt)
 
 	return nil
 }
@@ -147,7 +150,7 @@ func (s *Server) initializeHttpServerInternals(ctx context.Context, opt *plugin.
 func (s *Server) createAuthHandlers(ctx context.Context, opt *plugin.ServiceOptions) (func(ctx context.Context, handlers map[string]interface{}) error, error) {
 	var (
 		testMode   = opt.Env.DeploymentEnv() == definition.ServiceDeploy_Test
-		auth       = !opt.Definitions.HTTP.DisableAuth
+		auth       = !s.defs.DisableAuth
 		authPlugin = s.getAuth(opt)
 	)
 
@@ -199,8 +202,8 @@ func (s *Server) registerHttpServer(handler fasthttp.RequestHandler, opt *plugin
 	}
 }
 
-func (s *Server) getPanicRecorvery(opt *plugin.ServiceOptions) http_panic_recovery.Recovery {
-	if opt.Definitions.HTTP.DisablePanicRecovery {
+func (s *Server) getPanicRecovery(opt *plugin.ServiceOptions) http_panic_recovery.Recovery {
+	if s.defs.DisablePanicRecovery {
 		return nil
 	}
 

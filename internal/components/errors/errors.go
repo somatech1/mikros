@@ -24,7 +24,6 @@ type ServiceError struct {
 }
 
 type serviceErrorOptions struct {
-	HideDetails bool
 	Code        int32
 	Kind        errorsApi.Kind
 	ServiceName string
@@ -36,7 +35,6 @@ type serviceErrorOptions struct {
 
 func newServiceError(options *serviceErrorOptions) *ServiceError {
 	err := &Error{
-		hideDetails: options.HideDetails,
 		Code:        options.Code,
 		ServiceName: options.ServiceName,
 		Message:     options.Message,
@@ -123,8 +121,6 @@ type Error struct {
 	Destination   string         `json:"destination,omitempty"`
 	Kind          errorsApi.Kind `json:"kind"`
 	SubLevelError string         `json:"details,omitempty"`
-
-	hideDetails bool
 }
 
 func (e *Error) Error() string {
@@ -132,20 +128,6 @@ func (e *Error) Error() string {
 }
 
 func (e *Error) String() string {
-	out := Error{
-		Code:    e.Code,
-		Kind:    e.Kind,
-		Message: e.Message,
-	}
-
-	// The framework can be initialized disabling error message details at the
-	// output to avoid showing internal information.
-	if !e.hideDetails {
-		out.Destination = e.Destination
-		out.SubLevelError = e.SubLevelError
-		out.ServiceName = e.ServiceName
-	}
-
-	b, _ := json.Marshal(out)
+	b, _ := json.Marshal(e)
 	return string(b)
 }
