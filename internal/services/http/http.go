@@ -66,6 +66,9 @@ func (s *Server) Initialize(ctx context.Context, opt *plugin.ServiceOptions) err
 		return err
 	}
 
+	// Initialize specific service definitions
+	s.defs = newDefinitions(opt.Definitions)
+
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", opt.Port))
 	if err != nil {
 		return fmt.Errorf("could not listen to service port: %w", err)
@@ -75,7 +78,6 @@ func (s *Server) Initialize(ctx context.Context, opt *plugin.ServiceOptions) err
 		return err
 	}
 
-	s.defs = newDefinitions(opt.Definitions)
 	s.listener = listener
 	s.port = opt.Port
 	s.logger = opt.Logger
