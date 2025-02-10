@@ -16,18 +16,17 @@ import (
 // all service information that will be used to initialize it as well as all
 // features it will have when executing.
 type Definitions struct {
-	Name     string                 `toml:"name" validate:"required"`
-	Types    []string               `toml:"types" validate:"required,single_script,no_duplicated_service,dive,service_type"`
-	Version  string                 `toml:"version" validate:"required,version"`
-	Language string                 `toml:"language" validate:"required,oneof=go rust"`
-	Product  string                 `toml:"product" validate:"required"`
-	Envs     []string               `toml:"envs,omitempty" validate:"dive,ascii,uppercase"`
-	Deploy   Deploy                 `toml:"deploy,omitempty"`
-	Features Features               `toml:"features,omitempty"`
-	HTTP     HTTP                   `toml:"http,omitempty"`
-	Log      Log                    `toml:"log,omitempty"`
-	Service  map[string]interface{} `toml:"service,omitempty"`
-	Clients  map[string]GrpcClient  `toml:"clients,omitempty"`
+	Name     string                            `toml:"name" validate:"required"`
+	Types    []string                          `toml:"types" validate:"required,single_script,no_duplicated_service,dive,service_type"`
+	Version  string                            `toml:"version" validate:"required,version"`
+	Language string                            `toml:"language" validate:"required,oneof=go rust"`
+	Product  string                            `toml:"product" validate:"required"`
+	Envs     []string                          `toml:"envs,omitempty" validate:"dive,ascii,uppercase"`
+	Features Features                          `toml:"features,omitempty"`
+	Log      Log                               `toml:"log,omitempty"`
+	Service  map[string]interface{}            `toml:"service,omitempty"`
+	Clients  map[string]GrpcClient             `toml:"clients,omitempty"`
+	Services map[string]map[string]interface{} `toml:"services,omitempty"`
 
 	supportedServiceTypes []string
 	externalServices      map[string]ExternalServiceEntry
@@ -41,18 +40,6 @@ type Log struct {
 type GrpcClient struct {
 	Port int32  `toml:"port"`
 	Host string `toml:"host"`
-}
-
-type HTTP struct {
-	DisableAuth          bool `toml:"disable_auth,omitempty" default:"false"`
-	DisablePanicRecovery bool `toml:"disable_panic_recovery,omitempty" default:"false"`
-	HideErrorDetails     bool `toml:"hide_error_details,omitempty"`
-}
-
-type Deploy struct {
-	DisableProd bool   `toml:"disable_prod"`
-	DisableDev  bool   `toml:"disable_dev"`
-	Env         string `toml:"env,omitempty" validate:"omitempty,oneof=local test dev prod"`
 }
 
 // Features is a structure that defines a list of features that a service may
@@ -259,4 +246,10 @@ func (d *Definitions) ExternalServiceDefinitions(name string) (ExternalServiceEn
 	}
 
 	return v, nil
+}
+
+// LoadService retrieves only definitions from a specific service type.
+func (d *Definitions) LoadService(serviceType ServiceType) (map[string]interface{}, bool) {
+	dd, ok := d.Services[serviceType.String()]
+	return dd, ok
 }

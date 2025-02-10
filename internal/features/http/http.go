@@ -8,12 +8,10 @@ import (
 
 	loggerApi "github.com/somatech1/mikros/apis/logger"
 	"github.com/somatech1/mikros/components/definition"
-	"github.com/somatech1/mikros/components/logger"
 	"github.com/somatech1/mikros/components/plugin"
 )
 
 type Client struct {
-	isAuthenticated bool
 	plugin.Entry
 }
 
@@ -26,8 +24,7 @@ func (c *Client) CanBeInitialized(options *plugin.CanBeInitializedOptions) bool 
 	return ok
 }
 
-func (c *Client) Initialize(_ context.Context, opt *plugin.InitializeOptions) error {
-	c.isAuthenticated = !opt.Definitions.HTTP.DisableAuth
+func (c *Client) Initialize(_ context.Context, _ *plugin.InitializeOptions) error {
 	return nil
 }
 
@@ -54,7 +51,5 @@ func (c *Client) SetResponseCode(ctx context.Context, code int) {
 }
 
 func (c *Client) Fields() []loggerApi.Attribute {
-	return []loggerApi.Attribute{
-		logger.String("svc.http.auth", fmt.Sprintf("%t", c.isAuthenticated)),
-	}
+	return []loggerApi.Attribute{}
 }
