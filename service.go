@@ -392,7 +392,10 @@ func (s *Service) initializeServiceInternals(ctx context.Context, srv interface{
 	// allow its fields to be initialized at this point. Also, ensures that
 	// everything declared inside the main struct service is initialized to
 	// be used inside the callback.
-	if err := lifecycle.OnStart(srv, ctx, s.DeployEnvironment()); err != nil {
+	if err := lifecycle.OnStart(srv, ctx, &lifecycle.LifecycleOptions{
+		Env:            s.DeployEnvironment(),
+		ExecuteOnTests: s.definitions.Tests.ExecuteLifecycle,
+	}); err != nil {
 		return merrors.NewAbortError("failed while running lifecycle.OnStart", err)
 	}
 
@@ -574,7 +577,10 @@ func (s *Service) printServiceResources(ctx context.Context) {
 
 func (s *Service) run(ctx context.Context, srv interface{}) {
 	defer s.stopService(ctx)
-	defer lifecycle.OnFinish(srv, ctx, s.DeployEnvironment())
+	defer lifecycle.OnFinish(srv, ctx, &lifecycle.LifecycleOptions{
+		Env:            s.DeployEnvironment(),
+		ExecuteOnTests: s.definitions.Tests.ExecuteLifecycle,
+	})
 
 	// In case we're a script service, only execute its function and terminate
 	// the execution.
