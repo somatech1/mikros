@@ -7,10 +7,13 @@ import (
 	"github.com/somatech1/mikros/components/definition"
 )
 
-func OnStart(s interface{}, ctx context.Context, env definition.ServiceDeploy) error {
-	// Do not execute lifecycle events in tests to force them mock features
-	// that are being initialized by the service.
-	if env == definition.ServiceDeploy_Test {
+type LifecycleOptions struct {
+	Env            definition.ServiceDeploy
+	ExecuteOnTests bool
+}
+
+func OnStart(s interface{}, ctx context.Context, opt *LifecycleOptions) error {
+	if !shouldExecute(opt) {
 		return nil
 	}
 
@@ -21,14 +24,22 @@ func OnStart(s interface{}, ctx context.Context, env definition.ServiceDeploy) e
 	return nil
 }
 
-func OnFinish(s interface{}, ctx context.Context, env definition.ServiceDeploy) {
-	// Do not execute lifecycle events in tests to force them mock features
-	// that are being initialized by the service.
-	if env == definition.ServiceDeploy_Test {
+func OnFinish(s interface{}, ctx context.Context, opt *LifecycleOptions) {
+	if !shouldExecute(opt) {
 		return
 	}
 
 	if l, ok := s.(lifecycle.ServiceLifecycleFinisher); ok {
 		l.OnFinish(ctx)
 	}
+}
+
+func shouldExecute(opt *LifecycleOptions) bool {
+	// Do not execute lifecycle events by default in tests to force them mock
+	// features that are being initialized by the service.
+	if opt.Env == definition.ServiceDeploy_Test {
+		return opt.ExecuteOnTests
+	}
+
+	return true
 }

@@ -24,6 +24,7 @@ type Definitions struct {
 	Envs     []string                          `toml:"envs,omitempty" validate:"dive,ascii,uppercase"`
 	Features Features                          `toml:"features,omitempty"`
 	Log      Log                               `toml:"log,omitempty"`
+	Tests    Tests                             `toml:"tests"`
 	Service  map[string]interface{}            `toml:"service,omitempty"`
 	Clients  map[string]GrpcClient             `toml:"clients,omitempty"`
 	Services map[string]map[string]interface{} `toml:"services,omitempty"`
@@ -70,6 +71,11 @@ type ExternalServiceEntry interface {
 
 	// Validate should validate if the custom settings are valid or not.
 	Validate() error
+}
+
+// Tests gathers unit tests related options.
+type Tests struct {
+	ExecuteLifecycle bool `toml:"execute_lifecycle"`
 }
 
 // New creates a new Definitions structure initializing the service
