@@ -160,6 +160,11 @@ func (t *Testing) Delete(opts *RequestOptions) (*Response, error) {
 	return t.makeRequest(opts, http.MethodDelete)
 }
 
+// Patch makes a PATCH request to a service's endpoint.
+func (t *Testing) Patch(opts *RequestOptions) (*Response, error) {
+	return t.makeRequest(opts, http.MethodPatch)
+}
+
 func (t *Testing) makeRequest(opts *RequestOptions, method string) (*Response, error) {
 	req, err := createRequest(opts, method)
 	if err != nil {
