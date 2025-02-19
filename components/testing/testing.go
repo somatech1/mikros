@@ -28,6 +28,7 @@ type RequestOptions struct {
 	Headers     map[string]string
 	ContentType string
 	Body        interface{}
+	QueryParams map[string]string
 }
 
 func (r *RequestOptions) getContentType() string {
@@ -184,9 +185,18 @@ func (t *Testing) makeRequest(opts *RequestOptions, method string) (*Response, e
 }
 
 func createRequest(opts *RequestOptions, method string) (*fasthttp.Request, error) {
-	req := fasthttp.AcquireRequest()
+	var (
+		req     = fasthttp.AcquireRequest()
+		baseURL = fmt.Sprintf("http://test%s", opts.Path)
+		uri     fasthttp.URI
+	)
 
-	req.SetRequestURI(fmt.Sprintf("http://test%s", opts.Path))
+	uri.Update(baseURL)
+	for k, v := range opts.QueryParams {
+		uri.QueryArgs().Add(k, v)
+	}
+
+	req.SetRequestURI(uri.String())
 	req.Header.SetMethod(method)
 	req.Header.SetContentType(opts.getContentType())
 
